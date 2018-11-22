@@ -1,0 +1,13 @@
+---- pCallBack Matches (12 in 5 files) ----
+Main.c (mydogsrc):	MyDogInitParam->pCallBack = &MyDogCallback;
+Mydog.c (mydogsrc):void InitCallBackFun( DogCallBackObj* pCallBack )
+Mydog.c (mydogsrc):	pCallBack->GetLogFile = MyDogGetLogFile;
+Mydog.c (mydogsrc):	pCallBack->GetCpuTemperature = MyDogGetCpuTemperature;
+Mydog.h (include):	DogCallBackObj*          pCallBack;                  // include all function that sdk need callback;
+Mydog.h (include):void InitCallBackFun( DogCallBackObj* pCallBack );
+Server.c (mydogsrc):int Mydog_dispatch_get_log(int fd, DogCallBackObj* pCallBack);
+Server.c (mydogsrc):int Mydog_dispatch_open_telnet(int fd, DogCallBackObj* pCallBack);
+Server.c (mydogsrc):	DogCallBackObj* pCallBack;
+Server.c (mydogsrc):	ret = pCallBack->funOpenTelnetCb();
+Server.c (mydogsrc):						MydogDispatch[i].handler(cliSockFd,MyDogInitParam.pCallBack);
+Server.h (include):	int(*handler)(int fd, DogCallBackObj* pCallBack);
