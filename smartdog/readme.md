@@ -1,11 +1,9 @@
 # Smartdog maybe is the best software tool for debug
-
-##specify
-.lightly support web browser control
-.easily to add exstern function
-.support identify check
-
-##usage
-.gcc make the project
-.install the application
-.config and run
+### specify<br>
+.lightly support web browser control<br>
+.easily to add exstern function<br>
+.support identify check<br>
+### usage<br>
+.gcc make the project<br>
+.install the application<br>
+.config and run<br>
