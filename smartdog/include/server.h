@@ -8,7 +8,9 @@
 extern "C" {
 #endif
 
+#define HEADER "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n"
 
+#define HEADERJPG "HTTP/1.1 200 OK\r\nContent-type: image/png\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n"
 
 
 typedef enum HTTP_METHOD 

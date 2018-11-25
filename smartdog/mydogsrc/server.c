@@ -20,6 +20,34 @@
 #include "socket.h"
 #include "server.h"
 
+void LogServerSendHeader(int fd)
+{
+	char sendBuf[1024]={0};
+
+	memset(sendBuf, 0, 1024);
+	sprintf(sendBuf,"%s",HEADER);
+	if(LogServersend(&fd,sendBuf) == -1) 
+	{
+		debugpri("serverlog sed error\n");
+		//return;
+	}
+	return;
+}
+
+void LogServerSendHeaderjpg(int fd, long length)
+{
+	char sendBuf[1024]={0};
+
+	memset(sendBuf, 0, 1024);
+	sprintf(sendBuf,"HTTP/1.1 200 OK\r\nContent-type: image/png\r\nContent-Length: %ld\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n",length);
+	if(LogServersend(&fd,sendBuf) == -1) 
+	{
+		debugpri("serverlog sed error\n");
+		//return;
+	}
+	return;
+}
+
 void LogServerSendBadRequest(int fd)
 {
 	char sendBuf[1024]={0};
@@ -71,6 +99,49 @@ void LogServerSendOk(int fd)
 	close(fd);
 	return;
 }
+
+int Mydog_dispatch_get_index(int fd, DogCallBackObj* pCallBack)
+{
+	FILE* pindexfile = NULL;
+	struct stat indexinfo;
+	char sendBuf[1024]={0};
+
+	memset(sendBuf, 0, 1024);
+	LogServerSendHeader(fd);
+	if(stat("index.html", &indexinfo) == 0)
+	{
+		pindexfile=fopen("index.html","r");
+		if(pindexfile == NULL)
+		{
+			debugpri("index file open error!\n"); 					
+			pindexfile = NULL;
+			shutdown(fd, SHUT_RDWR);
+			close(fd);
+			return -1;
+		}
+		memset(sendBuf, 0, 1024);		
+		while( fgets(sendBuf, 1024,pindexfile) != NULL)
+		{				
+			if(LogServersend(&fd,sendBuf) == -1) 
+			{
+				debugpri("serverlog sed error\n");
+				fclose(pindexfile);
+				pindexfile = NULL;
+				break;
+			}
+			
+			memset(sendBuf, 0, 1024);
+		}
+	}
+	fclose(pindexfile);
+	pindexfile = NULL;
+	shutdown(fd, SHUT_RDWR);
+	close(fd);
+	return 0;
+	
+}
+
+
 
 
 int Mydog_dispatch_get_log(int fd, DogCallBackObj* pCallBack)
@@ -250,9 +321,66 @@ int Mydog_dispatch_get_temperature(int fd, DogCallBackObj* pCallBack)
 	ret = pCallBack->OpenTelnet();
 }
 
+int Mydog_dispatch_get_static(int fd, char *file)
+{
+	int ret;
+	int sendedlen = 0;
+	FILE* pfile = NULL;
+	struct stat indexinfo;
+	char sendBuf[256*1024]={0};
+	
+	if(stat(file, &indexinfo) != 0)
+	{
+		LogServerSendBadRequest(fd);
+		return -1;
+	}
+	pfile=fopen(file,"r");
+	if(pfile == NULL)
+	{
+		debugpri("index file open error!\n"); 					
+		pfile = NULL;
+		LogServerSendBadRequest(fd);
+		return -1;
+	}
+	LogServerSendHeaderjpg(fd,indexinfo.st_size);	
+	memset(sendBuf, 0, sizeof(sendBuf));	
+	do{
+		ret = fread(sendBuf, 1, 256 * 1024, pfile);
+		if(ret > 0 && ret <= 256 * 1024)
+		{
+			ret = send(fd, sendBuf, ret, 0);
+			if(ret > 0)
+			{
+				sendedlen += ret;
+			}
+			debugpri("static data size = %d ret = %d \n",sendedlen,ret);
+		}		
+	}while(sendedlen < indexinfo.st_size);
+	
+/*	while( fgets(sendBuf, 1024,pfile) != NULL)
+	{	
+		if((send(fd, (char const*) sendBuf, strlen(sendBuf),0)) < 0)	
+		//if(LogServersend(&fd,sendBuf) == -1) 
+		{
+			debugpri("serverlog sed error\n");	
+			break;
+		}
+		debugpri("static data\n");
+		memset(sendBuf, 0, 1024);
+	}
+	*/
+	debugpri("static data send ok\n");
+	fclose(pfile);
+	pfile = NULL;
+	shutdown(fd, SHUT_RDWR);
+	close(fd);
+	return 0;
+}
+
 
 HTTP_URI MydogDispatch [] =
 {
+	{"/"						,Mydog_dispatch_get_index		,AUTHORITY_NONE      ,0 ,NULL },
 	{"/log"					,Mydog_dispatch_get_log			,AUTHORITY_VIEWER   ,0 ,NULL },
 	{"/adminxc12345678"		,Mydog_dispatch_open_telnet		,AUTHORITY_VIEWER   ,0 ,NULL },
 	{"/hitemperature"			,Mydog_dispatch_get_temperature	,AUTHORITY_VIEWER   ,0 ,NULL },
@@ -312,7 +440,7 @@ int LogServerParseDispatch(char *recvbuf, char *name)
 	memcpy(url, stop, stop2 - stop);	
 	url[stop2 - stop] = '\0';
 	memcpy(name,url,strlen(url));	
-	printf("111 %d  url = %s\n",stop2 - stop,name);
+	debugpri("parse request %d  url = %s\n",stop2 - stop,name);
 	return 0;
 
 #if 0
@@ -447,6 +575,7 @@ void *LogServerLoop(void *arg)
 					close(cliSockFd);
 					continue;
 				}		
+				printf("recv: %s\n",recvBuf);
 				memset(url, 0, 1024);
 				ret = LogServerParseDispatch(recvBuf, url);
 				if(ret != 0)
@@ -454,6 +583,11 @@ void *LogServerLoop(void *arg)
 					LogServerSendBadRequest(cliSockFd);
 					continue;
 				}				
+				if (!memcmp(url, "/static/", 8))//dispatch static files
+				{
+					Mydog_dispatch_get_static(cliSockFd, "./static/snap.png");
+					continue;
+				}
 				for(i = 0; i < (sizeof(MydogDispatch)/sizeof(HTTP_URI)); i++)
 				{
 					
