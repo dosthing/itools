@@ -34,12 +34,12 @@ void LogServerSendHeader(int fd)
 	return;
 }
 
-void LogServerSendHeaderjpg(int fd, long length)
+void LogServerSendHeaderjpg(int fd, char * contentType, long length)
 {
 	char sendBuf[1024]={0};
 
 	memset(sendBuf, 0, 1024);
-	sprintf(sendBuf,"HTTP/1.1 200 OK\r\nContent-type: image/png\r\nContent-Length: %ld\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n",length);
+	sprintf(sendBuf,"HTTP/1.1 200 OK\r\nContent-type: %s\r\nContent-Length: %ld\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n",contentType,length);
 	if(LogServersend(&fd,sendBuf) == -1) 
 	{
 		debugpri("serverlog sed error\n");
@@ -53,7 +53,7 @@ void LogServerSendBadRequest(int fd)
 	char sendBuf[1024]={0};
 
 	memset(sendBuf, 0, 1024);
-	sprintf(sendBuf,"HTTP/1.1 404 Resource not found\r\nContent-type: text/html\r\nServer: MyDogV1.0\r\n");
+	sprintf(sendBuf,"HTTP/1.1 404 Resource not found\r\nContent-type: text/html\r\nServer: MyDogV1.0\r\n\r\n");
 	if(LogServersend(&fd,sendBuf) == -1) 
 	{
 		debugpri("serverlog sed error\n");
@@ -71,7 +71,7 @@ void LogServerSendUnAuthorized(int fd, char *url)
 	char sendBuf[1024]={0};
 
 	memset(sendBuf, 0, 1024);
-	sprintf(sendBuf,"HTTP/1.1 401 Unauthorized\r\nContent-type: text/html\r\nServer: MyDogV1.0\r\n");
+	sprintf(sendBuf,"HTTP/1.1 401 Unauthorized\r\nContent-type: text/html\r\nServer: MyDogV1.0\r\n\r\n");
 	if(LogServersend(&fd,sendBuf) == -1) 
 	{
 		debugpri("serverlog sed error\n");
@@ -83,12 +83,13 @@ void LogServerSendUnAuthorized(int fd, char *url)
 	return;
 }
 
+
 void LogServerSendOk(int fd)
 {
 	char sendBuf[1024]={0};
 
 	memset(sendBuf, 0, 1024);
-	sprintf(sendBuf,"HTTP/1.1 200 OK\r\nContent-type: text/html\r\nServer: MyDogV1.0\r\n");
+	sprintf(sendBuf,"HTTP/1.1 200 OK\r\nContent-type: text/html\r\nServer: MyDogV1.0\r\n\r\n");
 	if(LogServersend(&fd,sendBuf) == -1) 
 	{
 		debugpri("serverlog sed error\n");
@@ -100,7 +101,7 @@ void LogServerSendOk(int fd)
 	return;
 }
 
-int Mydog_dispatch_get_index(int fd, DogCallBackObj* pCallBack)
+int Mydog_dispatch_get_index(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_ARGUMENTS_t *arg)
 {
 	FILE* pindexfile = NULL;
 	struct stat indexinfo;
@@ -141,10 +142,50 @@ int Mydog_dispatch_get_index(int fd, DogCallBackObj* pCallBack)
 	
 }
 
+int Mydog_dispatch_get_favicon(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_ARGUMENTS_t *arg)
+{
+	FILE* favicon = NULL;
+	int ret = 0;
+	int sendedlen = 0;
+	struct stat ifaviconinfo;
+	char sendBuf[32*1024]={0};
+	char contentType[512];
 
+	if(stat("favicon.ico", &ifaviconinfo) == 0)
+	{
+		GetFileContentType("favicon.ico",contentType);
+		favicon=fopen("favicon.ico","r");
+		if(favicon == NULL)
+		{
+			debugpri("favicon file open error!\n");					
+			favicon = NULL;
+			LogServerSendBadRequest(fd);
+			return -1;
+		}
+		LogServerSendHeaderjpg(fd,contentType,ifaviconinfo.st_size);	
+		memset(sendBuf, 0, sizeof(sendBuf));	
+		do{
+			ret = fread(sendBuf, 1, sizeof(sendBuf), favicon);
+			if(ret > 0 && ret <= sizeof(sendBuf))
+			{
+				ret = send(fd, sendBuf, ret, 0);
+				if(ret > 0)
+				{
+					sendedlen += ret;
+				}
+				debugpri("static data size = %d ret = %d \n",sendedlen,ret);
+			}		
+		}while(sendedlen < ifaviconinfo.st_size);
 
+	}
+	fclose(favicon);
+	favicon = NULL;
+	shutdown(fd, SHUT_RDWR);
+	close(fd);
+	return 0;
+}
 
-int Mydog_dispatch_get_log(int fd, DogCallBackObj* pCallBack)
+int Mydog_dispatch_get_log(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_ARGUMENTS_t *arg)
 {	
 	int ret;
 	if(pCallBack == NULL)
@@ -155,6 +196,7 @@ int Mydog_dispatch_get_log(int fd, DogCallBackObj* pCallBack)
 	}	
 	ret = pCallBack->GetLogFile(NULL);
 	LogServerSendBadRequest(fd);
+	return ret;
 #if 0
 	FILE* plogfile = NULL;
 	struct stat logeinfo;
@@ -265,7 +307,7 @@ int Mydog_dispatch_get_log(int fd, DogCallBackObj* pCallBack)
 }
 
 
-int Mydog_dispatch_open_telnet(int fd, DogCallBackObj* pCallBack)
+int Mydog_dispatch_open_telnet(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_ARGUMENTS_t *arg)
 {
 	int ret =0;	
 	char nowtime[64]={0};
@@ -305,7 +347,21 @@ int Mydog_dispatch_open_telnet(int fd, DogCallBackObj* pCallBack)
 	
 }
 
-int Mydog_dispatch_get_temperature(int fd, DogCallBackObj* pCallBack)
+int Mydog_dispatch_get_login(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_ARGUMENTS_t *arg)
+{	
+	if((strcmp(arg[0].value,"admin") == 0) && (strcmp(arg[1].value,"12345") == 0))
+	{
+		LogServerSendHeader(fd);
+		LogServersend(&fd,"login sucess");
+	}
+	else
+		LogServersend(&fd,"login fail, user name or password error\n");
+	shutdown(fd, SHUT_RDWR);
+	close(fd);
+	return 0;
+}
+
+int Mydog_dispatch_get_temperature(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_ARGUMENTS_t *arg)
 {
 	int ret =0;	
 	char nowtime[64]={0};
@@ -321,12 +377,44 @@ int Mydog_dispatch_get_temperature(int fd, DogCallBackObj* pCallBack)
 	ret = pCallBack->OpenTelnet();
 }
 
+int GetFileContentType(char *file, char *contentType)
+{
+	if(strstr(file,"jpg")!= NULL)
+	{
+		sprintf(contentType,"%s","image/png");
+		return 0;
+	}
+	else if(strstr(file,"jpg")!= NULL)
+	{
+		sprintf(contentType,"%s","image/png");
+		return 0;
+	}
+	else if(strstr(file,"ico")!= NULL)
+	{
+		sprintf(contentType,"%s","image/png");
+		return 0;
+	}
+	else if(strstr(file,"html")!= NULL)
+	{
+		sprintf(contentType,"%s","text/html");
+		return 0;
+	}
+	else
+	{
+		sprintf(contentType,"%s","text/html");
+	}
+
+	return 0;
+}
+
+
 int Mydog_dispatch_get_static(int fd, char *file)
 {
 	int ret;
 	int sendedlen = 0;
 	FILE* pfile = NULL;
 	struct stat indexinfo;
+	char contentType[512];
 	char sendBuf[256*1024]={0};
 	
 	if(stat(file, &indexinfo) != 0)
@@ -334,6 +422,8 @@ int Mydog_dispatch_get_static(int fd, char *file)
 		LogServerSendBadRequest(fd);
 		return -1;
 	}
+	
+	GetFileContentType(file,contentType);
 	pfile=fopen(file,"r");
 	if(pfile == NULL)
 	{
@@ -342,7 +432,7 @@ int Mydog_dispatch_get_static(int fd, char *file)
 		LogServerSendBadRequest(fd);
 		return -1;
 	}
-	LogServerSendHeaderjpg(fd,indexinfo.st_size);	
+	LogServerSendHeaderjpg(fd,contentType,indexinfo.st_size);	
 	memset(sendBuf, 0, sizeof(sendBuf));	
 	do{
 		ret = fread(sendBuf, 1, 256 * 1024, pfile);
@@ -378,14 +468,98 @@ int Mydog_dispatch_get_static(int fd, char *file)
 }
 
 
+
 HTTP_URI MydogDispatch [] =
 {
-	{"/"						,Mydog_dispatch_get_index		,AUTHORITY_NONE      ,0 ,NULL },
-	{"/log"					,Mydog_dispatch_get_log			,AUTHORITY_VIEWER   ,0 ,NULL },
-	{"/adminxc12345678"		,Mydog_dispatch_open_telnet		,AUTHORITY_VIEWER   ,0 ,NULL },
-	{"/hitemperature"			,Mydog_dispatch_get_temperature	,AUTHORITY_VIEWER   ,0 ,NULL },
+	{"/"						,Mydog_dispatch_get_index		,AUTHORITY_NONE       ,0,0,{0},NULL },
+	{"/favicon.ico"			,Mydog_dispatch_get_favicon		,AUTHORITY_NONE       ,0,0,{0},NULL },
+	{"/loginservlet"			,Mydog_dispatch_get_login		,AUTHORITY_NONE       ,0,0,{0},NULL },
+	{"/log"					,Mydog_dispatch_get_log			,AUTHORITY_VIEWER    ,0,0,{0},NULL },
+	{"/adminxc12345678"		,Mydog_dispatch_open_telnet		,AUTHORITY_VIEWER    ,0,0,{0},NULL },
+	{"/hitemperature"			,Mydog_dispatch_get_temperature	,AUTHORITY_VIEWER    ,0,0,{0},NULL },
 };	
 
+int LogServerParseParameters(HTTP_URI *req,char *recvbuf, char *name)
+{
+	int i,ret = -1;
+	char *p = NULL;
+	char *stop, *stop2;
+	char parameters[2014]={0}; 
+
+	if (!memcmp(recvbuf, "GET ", 4))
+	{
+		p = strstr(recvbuf,"GET ");	
+		if(p != NULL)
+		{
+			while (*(++p) != ' ');
+				stop = p;
+			while (*(++p) != '\0' && *p != ' ');
+				stop2 = p;
+			stop2++;
+			memcpy(parameters, stop, stop2 - stop);	
+			parameters[stop2 - stop] = '\0';
+			printf("parase:  %s\n",parameters);
+		}
+	}
+	else if (!memcmp(recvbuf, "POST ", 5))
+	{
+		p = strstr(recvbuf,"\r\n\r\n");	
+		if(p != NULL)
+		{
+			p = p+4;		
+			stop = p;
+			while (*(++p) != '\0' && *p != ' ');
+				stop2 = p;
+			stop2++;
+			memcpy(parameters, stop, stop2 - stop);	
+			parameters[stop2 - stop] = '\0';
+			printf("parase:  %s\n",parameters);
+		}
+	}
+	else 
+	{
+		fprintf(stderr, "malformed request: \"%s\"\n",recvbuf);		
+		return ret;
+	}	
+
+	while(i < strlen(parameters))
+	{
+		if(parameters[i] == '=') // have parameters, so parse paramerters 
+		{
+			memset(req->parameters,0,sizeof(req->parameters));
+			req->parameterscount = 0;
+			p = parameters;
+			stop = p;	
+			while(*p != '\0')
+			{
+				while (*(++p) != '=');
+				stop2 = p;						
+				memcpy(req->parameters[req->parameterscount].name, stop, stop2 - stop);	
+				req->parameters[req->parameterscount].name[stop2 - stop] = '\0';			
+
+				stop2++;
+				stop = stop2;
+				while (*(++p) != '&' && *p != '\0');				
+				stop2 = p;	
+				memcpy(req->parameters[req->parameterscount].value, stop, stop2 - stop); 
+				req->parameters[req->parameterscount].value[stop2 - stop] = '\0';
+				stop2++;	
+				stop = stop2;
+				req->parameterscount++;				
+			}
+			ret = 0;
+			break;
+		
+		}
+		i++;	
+	}
+	for(i = 0; i < req->parameterscount; i++)
+	{
+		printf("argname = %s    argvalue = %s\n",req->parameters[i].name,req->parameters[i].value);
+	}
+	
+	return ret;	
+}
 
 int LogServerParseDispatch(char *recvbuf, char *name)
 {
@@ -495,6 +669,8 @@ int LogServerParseAuthority(char *recvbuf, char *authority)
 	return -1;
 }
 
+
+
 int LogServerDecodeAuthority(char *recvbuf)
 {
 	int ret;
@@ -527,7 +703,7 @@ void *LogServerLoop(void *arg)
 	int logfilesize = 0;
 	int sizesended = 0;
 	int sizereaded = 0;	
-	char recvBuf[1024];
+	char recvBuf[16*1024];
 	char url[1024];
 	fd_set sockFds;
 	struct timeval timeout;
@@ -566,8 +742,8 @@ void *LogServerLoop(void *arg)
 					debugpri("Mydog Server accept error\n");
 					continue;
 				}
-				memset(recvBuf, 0, 1024);
-				recvLen = recv(cliSockFd, recvBuf, 1024, 0);
+				memset(recvBuf, 0, sizeof(recvBuf));
+				recvLen = recv(cliSockFd, recvBuf, sizeof(recvBuf), 0);
 				if(recvLen <= 0)
 				{
 					debugpri("serverlog recv error\n");
@@ -576,7 +752,7 @@ void *LogServerLoop(void *arg)
 					continue;
 				}		
 				printf("recv: %s\n",recvBuf);
-				memset(url, 0, 1024);
+				memset(url, 0, sizeof(url));
 				ret = LogServerParseDispatch(recvBuf, url);
 				if(ret != 0)
 				{
@@ -585,7 +761,7 @@ void *LogServerLoop(void *arg)
 				}				
 				if (!memcmp(url, "/static/", 8))//dispatch static files
 				{
-					Mydog_dispatch_get_static(cliSockFd, "./static/snap.png");
+					Mydog_dispatch_get_static(cliSockFd, &url[1]);// static/snap.jpg
 					continue;
 				}
 				for(i = 0; i < (sizeof(MydogDispatch)/sizeof(HTTP_URI)); i++)
@@ -602,10 +778,19 @@ void *LogServerLoop(void *arg)
 								break;
 							 }
 						}
-						MydogDispatch[i].handler(cliSockFd,MyDogInitParam->pCallBack);
-						
+						ret = LogServerParseParameters(&MydogDispatch[i],recvBuf, url);
+						if(ret != 0)
+						{
+							//LogServerSendBadRequest(cliSockFd);
+							//break;
+						}
+						MydogDispatch[i].handler(cliSockFd,MyDogInitParam->pCallBack,MydogDispatch[i].parameterscount,MydogDispatch[i].parameters);						
 						break;
 					}
+				}
+				if( i == (sizeof(MydogDispatch)/sizeof(HTTP_URI)))//doesn't match anything 
+				{
+					LogServerSendBadRequest(cliSockFd);
 				}
 				
 			}

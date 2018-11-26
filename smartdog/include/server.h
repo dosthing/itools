@@ -34,19 +34,27 @@ typedef enum {
 	AUTHORITY_ADMIN,		
 } AUTHORITY;
 
+typedef struct HTTP_ARGUMENT_s
+{
+    char name[64];
+    char value[64];    
+} HTTP_ARGUMENTS_t;
+
 
 typedef struct __HTTP_URI
 {
 	char *name;
-	int(*handler)(int fd, DogCallBackObj* pCallBack);
+	int(*handler)(int fd, DogCallBackObj* pCallBack,int argnum,HTTP_ARGUMENTS_t *arg);
 	AUTHORITY authority;
 	int uri_flag;
+	int parameterscount;
+	HTTP_ARGUMENTS_t parameters[32];
 
 	struct __HTTP_URI *next;
 
 } HTTP_URI;
 
-
+int GetFileContentType(char *file, char *contentType);
 void *LogServerLoop(void *arg);
 
 
