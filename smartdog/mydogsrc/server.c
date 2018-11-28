@@ -384,7 +384,7 @@ int GetFileContentType(char *file, char *contentType)
 		sprintf(contentType,"%s","image/png");
 		return 0;
 	}
-	else if(strstr(file,"jpg")!= NULL)
+	else if(strstr(file,"png")!= NULL)
 	{
 		sprintf(contentType,"%s","image/png");
 		return 0;
@@ -392,6 +392,11 @@ int GetFileContentType(char *file, char *contentType)
 	else if(strstr(file,"ico")!= NULL)
 	{
 		sprintf(contentType,"%s","image/png");
+		return 0;
+	}
+	else if(strstr(file,"css")!= NULL)
+	{
+		sprintf(contentType,"%s","text/css");
 		return 0;
 	}
 	else if(strstr(file,"html")!= NULL)
