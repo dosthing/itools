@@ -2,7 +2,7 @@
 ### specify<br>
 ---
 * lightly support web browser control<br>
-* easily to add exstern function<br>
+* easily to add extern function<br>
 * support identify check<br>
 ### usage<br>
 ---
