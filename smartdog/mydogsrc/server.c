@@ -489,7 +489,7 @@ int LogServerParseParameters(HTTP_URI *req,char *recvbuf, char *name)
 	int i,ret = -1;
 	char *p = NULL;
 	char *stop, *stop2;
-	char parameters[2014]={0}; 
+	char parameters[2048]={0}; 
 
 	if (!memcmp(recvbuf, "GET ", 4))
 	{
@@ -569,7 +569,7 @@ int LogServerParseParameters(HTTP_URI *req,char *recvbuf, char *name)
 int LogServerParseDispatch(char *recvbuf, char *name)
 {
 	char *stop, *stop2;
-	char url[2014]={0}; 	
+	char url[2048]={0}; 	
 	
 	if(recvbuf == NULL)
 	{
