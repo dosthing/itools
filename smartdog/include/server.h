@@ -23,7 +23,8 @@ typedef enum HTTP_METHOD
 	M_LINK,
 	M_UNLINK,
 	M_MOVE,
-	M_TRACE
+	M_TRACE,
+	M_UNKOWN
 }METHOD;
 
 

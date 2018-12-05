@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<style type="text/css">
+#formstyle {
+	width: 280px;
+	height: 220px;
+	border: 1px solid;
+	background: gray;
+	position:absolute;
+	top:20px;
+	left:400px;
+}
+#ajaxstyle {
+	top:140px;
+}
+</style>
+<script>
+    function send() {
+
+        var ele = document.getElementsByClassName("user")[0];
+        var con = ele.valueOf;
+		var user = document.getElementById("username");
+		var data = "user="+user.value;
+		console.log(user.value);
+        xmlHttp=new XMLHttpRequest();
+		//get
+        //xmlHttp.open("GET","http://dosthing.natapp1.cc/static/ajax/ajax.txt",true);	
+        //xmlHttp.send(null);
+		//post
+		//https://www.cnblogs.com/lucky01/p/9235555.html
+		xmlHttp.open("POST","http://dosthing.natapp1.cc/static/ajax/ajax.txt",true);
+		xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+		xmlHttp.send(data);
+
+
+        xmlHttp.onreadystatechange=function () {
+            if (xmlHttp.readyState ==4 && xmlHttp.status ==200){
+                alert(xmlHttp.responseText);
+                //alert(typeof xmlHttp.responseText)
+				var obj = JSON.parse(xmlHttp.responseText);
+				var resolution = obj.resolutions;
+				console.log(resolution);
+				for(var i = 0;i<resolution.length;i++)
+				{
+					//var tmp = JSON.parse(resolution);
+					//alert(tmp.width);
+					console.log(resolution[i].width);
+				}		
+				alert(obj.address);
+				console.log("get msg from server");//控制台输出
+				
+				var jsonstr = {};
+				jsonstr["name"] = 'lishaung';
+				var json = JSON.stringify(jsonstr);
+				var json1 = JSON.parse(json);
+				console.log(json1);
+
+            }
+        }
+		
+		/*
+		var Ajax={
+			get: function(url, fn) {
+				// XMLHttpRequest对象用于在后台与服务器交换数据   
+				var xhr = new XMLHttpRequest();            
+				xhr.open('GET', url, true);
+				xhr.onreadystatechange = function() {
+					// readyState == 4说明请求已完成
+					if (xhr.readyState == 4 && xhr.status == 200 || xhr.status == 304) { 
+						// 从服务器获得数据 
+						fn.call(this, xhr.responseText);  
+					}
+				};
+				xhr.send();
+			},
+			// datat应为'a=a1&b=b1'这种字符串格式，在jq里如果data为对象会自动将对象转成这种字符串格式
+			post: function (url, data, fn) {
+				var xhr = new XMLHttpRequest();
+				xhr.open("POST", url, true);
+				// 添加http头，发送信息至服务器时内容编码类型
+				xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");  
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
+						fn.call(this, xhr.responseText);
+					}
+				};
+				xhr.send(data);
+			}
+		}
+		*/
+
+ }
+	function formdata(){
+	
+	}
+ 
+</script>
+<body>
+	<div id="formstyle">
+		<form action="http://dosthing.natapp1.cc/loginservlet" method="post">
+
+			<p><input type="text" style="border: 1px solid pink;position:relative; left:50px;" name="username" placeholder="username"></p>
+			<p><input type="text" style="border: 1px solid pink;position:relative; left:50px;" name="password" placeholder="password"></p>
+			<button type="submit" style="border: 1px solid pink;position:relative; left:100px;" >登录</button>	
+
+		</form>
+		<div id="ajaxstyle">
+			<p>验证码：<input type="text" id="username" class="user"></p>
+			<button onclick="send()" style="width:50px; height:25px;border: 1px solid pink;position:relative; left:100px;background: yellowgreen;" >ajax</button>
+		</div>
+	</div>
+</body>
+
+</html>

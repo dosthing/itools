@@ -82,7 +82,7 @@ int LogServerAccept(int serverfd)
 		}
 		return -1;
 	}
-	recvSize = 2048;
+	recvSize = 4096;
 	if(setsockopt(cliSockFd, SOL_SOCKET, SO_SNDBUF, (char *)&recvSize, sizeof(recvSize)) == -1)
 	{
 		debugpri("setsockopt cliSockFd = %d error\n",cliSockFd);
@@ -108,7 +108,7 @@ int LogServerAccept(int serverfd)
 	return cliSockFd;
 }
 
-int LogServerCreate()
+int LogServerCreate(int port)
 {
 	int server_s;
 	int sockOptVal = 1;
@@ -140,7 +140,7 @@ int LogServerCreate()
 	memset(&svrAddr, 0, sizeof(svrAddr));
 	svrAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	svrAddr.sin_family = AF_INET;
-	svrAddr.sin_port = htons(SERVERPORT);
+	svrAddr.sin_port = htons(port);
 	if(bind(server_s, (struct sockaddr *)&svrAddr,sizeof(struct sockaddr)) == -1)
 	{
 	   debugpri("bind socket error \n");

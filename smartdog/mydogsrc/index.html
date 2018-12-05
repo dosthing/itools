@@ -4,12 +4,29 @@
 <head>
 	<meta charset="utf-8">
 	<title>MyDogServer</title>	
+	<link type ="text/css" rel = "stylesheet"  href = "static/login/loginstyle.css" />
 </head>
 <body>
+	<div class="wrapper">
+		<div class="loginpanel">
 	<h3 align="center">Welcom to the magic world</h3>	
 	<div align="center">
-		<img src="/static/user.png" width="16" height="16" alt="hello 你好"> 你好： </img>
-		<a href="static/login.html">请先登录...</a>
+				<img src="/static/login/images/user.png" width="16" height="16" alt="hello 你好"> 您好： 请先登录...</img>					
+				<form class="ui form" action="/loginservlet" method="post">
+				  <div class="field">
+					<input type="text" style="font-size:16px;" name="username" placeholder="username">
+				  </div>	
+				  <div class="field">
+					<input type="text" style="font-size:16px;" name="password" placeholder="password">
+				  </div>
+				  <button type="submit">登录</button>				  
+			  </form>
+			  <div align="right">
+				<a href="static/login.html" style="font-size:12px;" >未注册...&nbsp&nbsp</a>
+			  </div>
+			</div>
+
+		</div>
 	</div>
 </body>
 </html>

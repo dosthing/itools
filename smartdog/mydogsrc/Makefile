@@ -3,6 +3,7 @@ INC_FLAGS := -I../include/
 CFLAGS := -Ddebugprintf
 CFLAGS += $(INC_FLAGS)
 CFLAGS += -lpthread 
+CFLAGS += -L../cjsonsrclibcJSON.a 
 CFLAGS += -Wall -g -O2
 #CFLAGS := -Wall -g -O2 -fPIC 
 #-static 

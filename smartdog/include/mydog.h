@@ -32,7 +32,7 @@ typedef struct _DogInitParam
 	char                            bIsOpenPrint;            // 0: close print; 1: open print
 	const char*                  strSerialNum;            // device's serial number;
 	const char*                  strDevMac;               // device's MAC;
-	int                       	nLocalTcpPort;          // local network device listen port
+	int                       	httpport;          // local network device listen port
 	int                         	nBatch;                     // device's batch when it leave the factory;
 	DogCallBackObj*          pCallBack;                  // include all function that sdk need callback;
 }DogInitParam;

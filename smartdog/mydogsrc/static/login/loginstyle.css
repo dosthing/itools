@@ -1,0 +1,46 @@
+body {
+  background: url('images/super_blur_back2.jpg');
+  background-size: cover;
+  filter:alpha(opacity=50);  
+  opacity: 0.5;
+  /*background-repeat: no-repeat;
+  background-attachment: fixed;*/
+}
+
+.wrapper {
+  /*???*/
+  width: 600px !important;
+  height: 400px;
+  position: absolute;
+  left: 50%;
+  top: 43%;
+  transform: translate(-50%, -50%);
+  /*  视觉消除白边 */
+  border: rgba(255, 0, 0, 0);
+}
+
+h3 {
+    text-align: center;
+    margin-bottom: 10px;
+	color: gray;
+}
+.loginpanel {
+	width: 400px;
+    height: 210px;
+    background-color: #F2F2F2;
+	border-radius: 4px;
+    border-left: 2px solid blueviolet;
+    border-right: 2px solid blueviolet;
+	border-top: 2px solid blueviolet;
+    border-bottom: 2px solid blueviolet;
+    position: absolute;
+    top: 80px;
+    right: 80px;	
+	opacity: 0.5; 
+}
+.field {
+	/*width: 30px;
+    height: 20px;	*/
+	margin: 15px;
+
+}

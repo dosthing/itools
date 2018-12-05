@@ -61,6 +61,7 @@ int main (int argc, char *argv[])
 	InitCallBackFun(&MyDogCallback);
 	MyDogInitParam.bIsOpenPrint = 0;
 	MyDogInitParam.strSerialNum= "12345678";
+	MyDogInitParam.httpport = SERVERPORT;
 	
 
 	MyDogInitParam.pCallBack = &MyDogCallback;

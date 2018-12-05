@@ -12,7 +12,8 @@ int LogServersend(int *ServSock,char *sendbuf);
 
 int LogServerAccept(int serverfd);
 
-int LogServerCreate();
+int LogServerCreate(int port);
+
 
 
 #ifdef __cplusplus

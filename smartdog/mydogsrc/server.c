@@ -34,7 +34,7 @@ void LogServerSendHeader(int fd)
 	return;
 }
 
-void LogServerSendHeaderjpg(int fd, char * contentType, long length)
+void LogServerSendHeaderstatic(int fd, char * contentType, long length)
 {
 	char sendBuf[1024]={0};
 
@@ -162,7 +162,7 @@ int Mydog_dispatch_get_favicon(int fd, DogCallBackObj* pCallBack, int argnum,HTT
 			LogServerSendBadRequest(fd);
 			return -1;
 		}
-		LogServerSendHeaderjpg(fd,contentType,ifaviconinfo.st_size);	
+		LogServerSendHeaderstatic(fd,contentType,ifaviconinfo.st_size);	
 		memset(sendBuf, 0, sizeof(sendBuf));	
 		do{
 			ret = fread(sendBuf, 1, sizeof(sendBuf), favicon);
@@ -351,14 +351,18 @@ int Mydog_dispatch_get_login(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_
 {	
 	if((strcmp(arg[0].value,"admin") == 0) && (strcmp(arg[1].value,"12345") == 0))
 	{
-		LogServerSendHeader(fd);
-		LogServersend(&fd,"login sucess");
+		//LogServerSendHeader(fd);
+		//LogServersend(&fd,"login sucess");
+		return Mydog_dispatch_get_static(fd, "static/login/sucess.html");		
 	}
 	else
-		LogServersend(&fd,"login fail, user name or password error\n");
-	shutdown(fd, SHUT_RDWR);
-	close(fd);
-	return 0;
+	{
+		//LogServersend(&fd,"login fail, user name or password error\n");
+		return Mydog_dispatch_get_static(fd, "static/login/fail.html");	
+	}	
+	//shutdown(fd, SHUT_RDWR);
+	//close(fd);
+	//return 0;
 }
 
 int Mydog_dispatch_get_temperature(int fd, DogCallBackObj* pCallBack, int argnum,HTTP_ARGUMENTS_t *arg)
@@ -379,12 +383,12 @@ int Mydog_dispatch_get_temperature(int fd, DogCallBackObj* pCallBack, int argnum
 
 int GetFileContentType(char *file, char *contentType)
 {
-	if(strstr(file,"jpg")!= NULL)
+	if(strstr(file,"png")!= NULL)
 	{
 		sprintf(contentType,"%s","image/png");
 		return 0;
 	}
-	else if(strstr(file,"png")!= NULL)
+	else if(strstr(file,"jpg")!= NULL)
 	{
 		sprintf(contentType,"%s","image/png");
 		return 0;
@@ -402,6 +406,11 @@ int GetFileContentType(char *file, char *contentType)
 	else if(strstr(file,"html")!= NULL)
 	{
 		sprintf(contentType,"%s","text/html");
+		return 0;
+	}
+	else if(strstr(file,"js")!= NULL)
+	{
+		sprintf(contentType,"%s","application/x-javascript");
 		return 0;
 	}
 	else
@@ -437,7 +446,7 @@ int Mydog_dispatch_get_static(int fd, char *file)
 		LogServerSendBadRequest(fd);
 		return -1;
 	}
-	LogServerSendHeaderjpg(fd,contentType,indexinfo.st_size);	
+	LogServerSendHeaderstatic(fd,contentType,indexinfo.st_size);	
 	memset(sendBuf, 0, sizeof(sendBuf));	
 	do{
 		ret = fread(sendBuf, 1, 256 * 1024, pfile);
@@ -489,7 +498,7 @@ int LogServerParseParameters(HTTP_URI *req,char *recvbuf, char *name)
 	int i,ret = -1;
 	char *p = NULL;
 	char *stop, *stop2;
-	char parameters[2048]={0}; 
+	char parameters[2014]={0}; 
 
 	if (!memcmp(recvbuf, "GET ", 4))
 	{
@@ -569,7 +578,7 @@ int LogServerParseParameters(HTTP_URI *req,char *recvbuf, char *name)
 int LogServerParseDispatch(char *recvbuf, char *name)
 {
 	char *stop, *stop2;
-	char url[2048]={0}; 	
+	char url[2014]={0}; 	
 	
 	if(recvbuf == NULL)
 	{
