@@ -39,7 +39,8 @@ void LogServerSendHeaderstatic(int fd, char * contentType, long length)
 	char sendBuf[1024]={0};
 
 	memset(sendBuf, 0, 1024);
-	sprintf(sendBuf,"HTTP/1.1 200 OK\r\nContent-type: %s\r\nContent-Length: %ld\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n",contentType,length);
+	sprintf(sendBuf,"HTTP/1.1 200 OK\r\nAccept-Ranges: none\r\nContent-type: %s\r\nContent-Length: %ld\r\nContent-Range: bytes 0-%ld/%ld\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n",contentType,length,length,length);
+	//sprintf(sendBuf,"HTTP/1.1 200 OK\r\nContent-type: %s\r\nContent-Length: %ld\r\nPragma: no-cache\r\nCache-Control: no-store\r\nServer: MyDogV1.0\r\n\r\n",contentType,length);
 	if(LogServersend(&fd,sendBuf) == -1) 
 	{
 		debugpri("serverlog sed error\n");
@@ -413,6 +414,11 @@ int GetFileContentType(char *file, char *contentType)
 		sprintf(contentType,"%s","application/x-javascript");
 		return 0;
 	}
+	else if(strstr(file,"mp3")!= NULL)
+	{
+		sprintf(contentType,"%s","audio/mp3");
+		return 0;
+	}
 	else
 	{
 		sprintf(contentType,"%s","text/html");
@@ -421,7 +427,6 @@ int GetFileContentType(char *file, char *contentType)
 	return 0;
 }
 
-
 int Mydog_dispatch_get_static(int fd, char *file)
 {
 	int ret;
@@ -429,7 +434,7 @@ int Mydog_dispatch_get_static(int fd, char *file)
 	FILE* pfile = NULL;
 	struct stat indexinfo;
 	char contentType[512];
-	char sendBuf[256*1024]={0};
+	char sendBuf[6*1024*1024]={0};
 	
 	if(stat(file, &indexinfo) != 0)
 	{
@@ -449,8 +454,8 @@ int Mydog_dispatch_get_static(int fd, char *file)
 	LogServerSendHeaderstatic(fd,contentType,indexinfo.st_size);	
 	memset(sendBuf, 0, sizeof(sendBuf));	
 	do{
-		ret = fread(sendBuf, 1, 256 * 1024, pfile);
-		if(ret > 0 && ret <= 256 * 1024)
+		ret = fread(sendBuf, 1, sizeof(sendBuf), pfile);
+		if(ret > 0 && ret <= sizeof(sendBuf))
 		{
 			ret = send(fd, sendBuf, ret, 0);
 			if(ret > 0)
@@ -459,6 +464,11 @@ int Mydog_dispatch_get_static(int fd, char *file)
 			}
 			debugpri("static data size = %d ret = %d \n",sendedlen,ret);
 		}		
+		else
+		{
+			debugpri("read or send error \n");
+			break;
+		}
 	}while(sendedlen < indexinfo.st_size);
 	
 /*	while( fgets(sendBuf, 1024,pfile) != NULL)
@@ -729,7 +739,7 @@ void *LogServerLoop(void *arg)
 	DogInitParam *MyDogInitParam = NULL;
 	MyDogInitParam = (DogInitParam*)arg; 
 	
-	svrSockFd = LogServerCreate();
+	svrSockFd = LogServerCreate(MyDogInitParam->httpport);
 	while(1)
 	{
 		FD_ZERO(&sockFds);

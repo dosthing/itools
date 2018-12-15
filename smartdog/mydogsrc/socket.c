@@ -82,7 +82,7 @@ int LogServerAccept(int serverfd)
 		}
 		return -1;
 	}
-	recvSize = 4096;
+	recvSize = 10*1024*1024;
 	if(setsockopt(cliSockFd, SOL_SOCKET, SO_SNDBUF, (char *)&recvSize, sizeof(recvSize)) == -1)
 	{
 		debugpri("setsockopt cliSockFd = %d error\n",cliSockFd);
